@@ -1,6 +1,6 @@
 --
 -- test if ss is working
---
+-- test condition change to 2 sites
 --
 require("socket")
 local https = require("ssl.https")
