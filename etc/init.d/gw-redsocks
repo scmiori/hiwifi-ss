@@ -65,20 +65,11 @@ rs_iptables_add() {
 	# 不翻墙地址，域名或ip
 	iptables -t nat -A $appname -m set --match-set ss_black dst -j RETURN
 
-        [ "$mode" == "2" ] && {
-		ipset -N gfwlist iphash
-		iptables -t nat -A $appname -p tcp -m set --match-set gfwlist dst -j DNAT --to-destination $lan_ip:$rs_port_tcp
-        }
-
-	[ "$mode" == "1" ] && {
-
-		iptables -t nat -A $appname -p tcp -j DNAT --to-destination $lan_ip:$rs_port_tcp
-        }
-	[ "$mode" == "0" ] && {
-
+	[ "$mode" != "1" ] && {
 		iptables -t nat -A $appname -m salist --salist china --match-dip -j RETURN
-		iptables -t nat -A $appname -p tcp -j DNAT --to-destination $lan_ip:$rs_port_tcp
 	}
+	
+    iptables -t nat -A $appname -p tcp -j DNAT --to-destination $lan_ip:$rs_port_tcp
 }
 
 rs_iptables_del() {

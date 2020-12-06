@@ -30,18 +30,18 @@ function index()
     entry({ "api", "prometheus", "start_ss" }, call("start_ss"), _(""), 606)
     -- get_ss_status  获取 ss 状态
     entry({ "api", "prometheus", "get_ss_status" }, call("get_ss_status"), _(""), 607)
+    --   升级
+    entry({ "api", "prometheus", "check_ss_updates" }, call("check_ss_updates"), _(""), 608)
     entry({ "api", "prometheus", "upgrade_ss" }, call("upgrade_ss"), _(""), 608)
     entry({ "api", "prometheus", "set_ss_adv" }, call("set_ss_adv"), _(""), 609)
     entry({ "api", "prometheus", "get_ss_adv" }, call("get_ss_adv"), _(""), 610)
     entry({ "api", "prometheus", "gfwlist_update" }, call("gfwlist_update"), _(""), 611)
-    -- 升级
-    entry({ "api", "prometheus", "check_ss_updates" }, call("check_ss_updates"), _(""), 612)
 end
 
 
 local luci_http = require("luci.http")
 local mime = require("mime")
-local VERSION = 'v1.0.9'
+local VERSION = 'v1.0.8'
 --local log = require "luci.log"
 
 function json_return(content)
@@ -51,23 +51,23 @@ end
 
 
 function check_ss_updates()
-    local latest_version = luci.sys.exec("/usr/bin/curl -k https://api.github.com/repos/qiwihui/hiwifi-ss/releases/latest -s | grep 'tag_name' | awk '{ print $2 }' | sed s/\"//g | sed s/,//g")
-    local result = {}
-    result["code"] = 0
-    result["latest_version"] = latest_version
+    local latest_version = luci.sys.exec('curl -k https://api.github.com/repos/qiwihui/hiwifi-ss/releases/latest -s | grep "tag_name" | awk "{ print $2 }" | sed s/\"//g | sed s/,//g')
     if VERSION ~= latest_version then
+        result["code"] = 0
         result["has_updates"] = 1
+        result["latest_version"] = latest_version
+        json_return(result)
     else
+        result["code"] = 0
         result["has_updates"] = 0
+        result["latest_version"] = latest_version
+        json_return(result)
     end
-    json_return(result)
-
 end
 
 function upgrade_ss()
     luci.sys.exec("cd /tmp && curl -k -o shadow.sh https://raw.githubusercontent.com/qiwihui/hiwifi-ss/master/shadow.sh && sh shadow.sh && rm shadow.sh")
     -- todo check if upgraded?
-    local result = {}
     result['code'] = 0
 	result['version'] = "success"
 	json_return(result)
@@ -100,9 +100,6 @@ function get_ss_cfg()
     result['plugin_opts'] = config['plugin_opts'] or 'obfs=http;obfs-host=www.bing.com'
     result['plugin_enable'] = config['plugin_enable'] or '0'
 
-    result['kcptun_opts'] = config['kcptun_opts'] or ':@kcptun_port -key @kcptun_password --mtu 1400 --sndwnd 128 --rcvwnd 512 -dscp 46 -mode fast2 -crypt salsa20'
-    result['kcptun_enable'] = config['kcptun_enable'] or '0'
-
     result["code"] = 0
     json_return(result)
 end
@@ -123,10 +120,6 @@ function set_ss_cfg()
     local plugin_enable = luci.http.formvalue("plugin_enable")
 --    local plugin = luci.http.formvalue("plugin")
     local plugin_opts = luci.http.formvalue("plugin_opts")
-
-    -- kcptun switch
-    local kcptun_enable = luci.http.formvalue("kcptun_enable")
-    local kcptun_opts = luci.http.formvalue("kcptun_opts")
 
     -- 查看是否有 shadowsocks 的配置，有则修改，无则创建
     local has_config = luci.sys.exec("test -f /etc/config/shadowsocks && echo -n 'yes' || echo -n 'no'")
@@ -152,10 +145,6 @@ function set_ss_cfg()
     luci.sys.exec('uci set shadowsocks.shadowsocks.plugin_enable='..plugin_enable..';')
     luci.sys.exec('uci set shadowsocks.shadowsocks.plugin="obfs-local";')
     luci.sys.exec('uci set shadowsocks.shadowsocks.plugin_opts=\"'..plugin_opts..'\";')
-
-    -- kcptun
-    luci.sys.exec('uci set shadowsocks.shadowsocks.kcptun_enable='..kcptun_enable..';')
-    luci.sys.exec('uci set shadowsocks.shadowsocks.kcptun_opts=\"'..kcptun_opts..'\";')
     luci.sys.exec('uci commit;')
 
     -- reload ss
