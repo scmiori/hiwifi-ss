@@ -1,18 +1,22 @@
 --
 -- test if ss is working
 --
-
-local host, port = "www.youtube.com", 443
-local socket = require("socket")
-local tcp = assert(socket.tcp())
-tcp:settimeout(2);
-tcp:connect(host, port);
-tcp:send("GET / HTTP/1.1\n");
-local s, status, partial = tcp:receive()
-if status == "closed" then
-    io.write('yes')
+require("socket")
+local https = require("ssl.https")
+local body, http_code_1, headers, status = https.request("htps://www.youtube.com")
+--local body, http_code_2, headers, status = https.request("https://www.facebook.com") 
+--local body, http_code_3, headers, status = https.request("https://www.google.com")
+--print(http_code_1)
+--print(http_code_2)
+--print(http_code_3)
+if http_code_1 ~= 200
+then io.write('no')
+--elseif http_code_2 ~= 200 
+--then
+--io.write('no')
+--elseif http_code_3 ~= 200 
+--then
+--io.write('no')
 else
-    io.write('no')
+io.write('yes')
 end
-tcp:close()
-

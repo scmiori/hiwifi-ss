@@ -10,7 +10,7 @@ fi
 
 doDownload(){
     cd /etc/gw-shadowsocks/
-    curl -s -o gfwlist2dnsmasq.sh https://raw.githubusercontent.com/cokebar/gfwlist2dnsmasq/master/gfwlist2dnsmasq.sh
+    curl -k -s -o gfwlist2dnsmasq.sh 'https://raw.githubusercontent.com/cokebar/gfwlist2dnsmasq/master/gfwlist2dnsmasq.sh'
     if [ $? != 0 ]; then
         echo -e "[ERROR] gfwlist2dnsmasq.sh download failed." >> ${logFile}
         exit 1
@@ -20,8 +20,7 @@ doDownload(){
 doUpdate(){
     cd /etc/gw-shadowsocks
     if [ -f "/etc/gw-shadowsocks/gw-shadowsocks.dnslist" ]; then
-        mv gw-shadowsocks.dnslist gw-shadowsocks.dnslist_bkp
-
+        mv gw-shadowsocks.dnslist gw-shadowsocks.dnslist_bk
         rm -rf gw-shadowsocks.dnslist
     fi
     # Todo Check if the previous list if the same as the new one
@@ -29,8 +28,15 @@ doUpdate(){
 }
 
 doGenerate(){
-    chmod +x /etc/gw-shadowsocks/gfwlist2dnsmasq.sh
-    /etc/gw-shadowsocks/gfwlist2dnsmasq.sh -i --port 53535 -o gw-shadowsocks.dnslist>/dev/null 2>&1
+    # Add china_ip_list from github to exsiting china.conf
+    curl -k -s -o /etc/salist/china.conf 'https://raw.githubusercontent.com/17mon/china_ip_list/master/china_ip_list.txt'
+	if [ $? != 0 ]; then
+        echo -e "[ERROR] China ip list download failed." >> ${logFile}
+        exit 1
+	fi
+	cat /etc/gw-shadowsocks/addr_list.conf > /etc/gw-shadowsocks/addr_list.conf_bk
+	chmod +x /etc/gw-shadowsocks/gfwlist2dnsmasq.sh
+    /etc/gw-shadowsocks/gfwlist2dnsmasq.sh -p 53535 -s gfwlist -i --extra-domain-file addr_list.conf -o gw-shadowsocks.dnslist>/dev/null 2>&1
     if [ $? != 0 ]; then
         echo -e "[ERROR] ${logTime} gw-shadowsocks.dnslist update failed." >> ${logFile}
     else
@@ -40,6 +46,9 @@ doGenerate(){
 }
 
 if [ -f "/etc/gw-shadowsocks/gfwlist2dnsmasq.sh" ]; then
+    cd /etc/gw-shadowsocks
+    mv gfwlist2dnsmasq.sh gfwlist2dnsmasq.sh_bk
+    doDownload
     doUpdate
 else
     doDownload
@@ -51,3 +60,4 @@ if [ ${SUCCESS} -eq "1" ]; then
 else
     echo -n "failed"
 fi
+

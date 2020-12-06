@@ -55,6 +55,7 @@ start() {
         service_start /usr/bin/ss-local -s $server -p $server_port -b 0.0.0.0 -l $local_port -k $password -t $timeout -m $method $params
         service_start /usr/bin/ss-redir -s $server -p $server_port -b 0.0.0.0 -l $rs_port -k $password -t $timeout -m $method $params
 
+
         #/etc/init.d/dnscrypt-proxy start
 		service_start /usr/bin/dns2socks 127.0.0.1:$local_port $dnsserver 127.0.0.1:53535 -d -q
 		/etc/init.d/gw-redsocks start
