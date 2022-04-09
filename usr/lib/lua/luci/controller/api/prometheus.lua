@@ -210,6 +210,9 @@ end
 function gfwlist_update()
     local result = {}
     local output = luci.sys.exec('/lib/gfwlist-update.sh')
+	
+	luci.sys.exec('/etc/init.d/gw-shadowsocks restart')
+	
     result["update_status"] = output
     json_return(result)
 end
