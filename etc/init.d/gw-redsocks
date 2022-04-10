@@ -40,11 +40,11 @@ rs_iptables_add() {
 	iptables -t nat -N $appname 
 	iptables -t nat -A PREROUTING -i br-lan -j $appname
 	iptables -t nat -A OUTPUT -j $appname
-	iptables -t nat -A $appname -m salist --salist local --match-dip -j RETURN 
-	iptables -t nat -A $appname -m salist --salist hiwifi --match-dip -j RETURN 
-	iptables -t nat -A $appname -d $lan_ip/24 -j RETURN
-	iptables -t nat -A $appname -d $wanip/24 -j RETURN
-	iptables -t nat -A $appname -d $server_ip/32 -j RETURN
+	iptables -t nat -A $appname -m salist --salist local --match-dip -j return 
+	iptables -t nat -A $appname -m salist --salist hiwifi --match-dip -j return 
+	iptables -t nat -A $appname -d $lan_ip/24 -j return
+	iptables -t nat -A $appname -d $wanip/24 -j return
+	iptables -t nat -A $appname -d $server_ip/32 -j return
 
 	if [ ! -f "/tmp/ss_spec_lan.txt" ]; then
 		# mac地址 禁用ss
@@ -54,7 +54,7 @@ rs_iptables_add() {
 				mac=$(echo $line | sed s/://g| sed s/：//g | tr '[a-z]' '[A-Z]')
 				mac="${mac:0:2}:${mac:2:2}:${mac:4:2}:${mac:6:2}:${mac:8:2}:${mac:10:2}"
 				if [ ! -z "$mac" ] ; then
-					iptables -t nat -I $appname -m mac --mac-source $mac -j RETURN
+					iptables -t nat -I $appname -m mac --mac-source $mac -j return
 				fi
 			fi
 		done <　/tmp/ss_spec_lan.txt
@@ -63,22 +63,25 @@ rs_iptables_add() {
 	# 翻墙地址，域名或ip
 	iptables -t nat -A $appname -m set --match-set ss_white dst -j DNAT --to-destination $lan_ip:$rs_port_tcp
 	# 不翻墙地址，域名或ip
-	iptables -t nat -A $appname -m set --match-set ss_black dst -j RETURN
-
-        [ "$mode" == "2" ] && {
-		ipset -N gfwlist iphash
-                iptables -t nat -A $appname -p tcp -m set --match-set gfwlist dst -j DNAT --to-destination $lan_ip:$rs_port_tcp
-        }
+	iptables -t nat -A $appname -m set --match-set ss_black dst -j return
+	
+	[ "$mode" == "2" ] && {
+	
+		iptables -t nat -A $appname -p tcp -m set --match-set gfwlist dst -j DNAT --to-destination $lan_ip:$rs_port_tcp
+        
+		}
 
 	[ "$mode" == "1" ] && {
 
 		iptables -t nat -A $appname -p tcp -j DNAT --to-destination $lan_ip:$rs_port_tcp
-        }
+		
+		}
+		
 	[ "$mode" == "0" ] && {
 
-		iptables -t nat -A $appname -m salist --salist china --match-dip -j RETURN
+		iptables -t nat -A $appname -m salist --salist china --match-dip -j return
 		iptables -t nat -A $appname -p tcp -j DNAT --to-destination $lan_ip:$rs_port_tcp
-	}
+		}
 	
 }
 
@@ -86,7 +89,7 @@ rs_iptables_del() {
 	echo -n > /dev/null
 	iptables -t nat -D PREROUTING -i br-lan -j $appname
 	iptables -t nat -D OUTPUT -j $appname
-	iptables -t nat -F $appname
+	iptables -t nat -f $appname
 	iptables -t nat -X $appname
 }
 
@@ -95,6 +98,7 @@ rs_getconfig
 # 创建ipset
 ipset -! create ss_white hash:net hashsize 64
 ipset -! create ss_black hash:net hashsize 64
+ipset -! create gfwlist hash:net hashsize 64
 
 rs_ipset() {
 
@@ -113,6 +117,20 @@ rs_ipset() {
 	grep -v '^#' $addr_list | sort -u > /tmp/ss_addr.list
 	rm -f /tmp/ss_wantoss.list
 	rm -f /tmp/ss_wannoss.list
+	rm -f /tmp/ss_fail.list
+
+	# 处理翻墙Address
+	while read line
+	do
+		addr_line=`echo $line`
+		if [ ! -z "$addr_line" ] ; then
+		echo $addr_line
+			# 解析域名为ip地址
+			/usr/bin/resolveip -4 -t 4 $addr_line | grep -v :  > /tmp/ss_tmp.list
+			[ ! -s /tmp/ss_tmp.list ] && echo $addr_line  >> /tmp/ss_fail.list
+			[ -s /tmp/ss_tmp.list ] && cat /tmp/ss_tmp.list| sort -u | grep -v "^$" >> /tmp/ss_wantoss.list && echo "" > /tmp/ss_tmp.list
+		fi
+	done < /tmp/ss_addr.list
 
 	while read line
 	do
@@ -122,7 +140,7 @@ rs_ipset() {
 			del_line=`echo $del_line | sed s/WAN@//g`
 			# 解析域名为ip地址
 			/usr/bin/resolveip -4 -t 4 $del_line | grep -v :  > /tmp/ss_tmp.list
-			[ ! -s /tmp/ss_tmp.list ] && arNslookup $del_line | sort -u | grep -v "^$"  >> /tmp/ss_wantoss.list
+			[ ! -s /tmp/ss_tmp.list ] && echo $addr_line  >> /tmp/ss_fail.list
 			[ -s /tmp/ss_tmp.list ] && cat /tmp/ss_tmp.list| sort -u | grep -v "^$" >> /tmp/ss_wantoss.list && echo "" > /tmp/ss_tmp.list
 		fi
 
@@ -139,12 +157,13 @@ rs_ipset() {
 		# +开头的 IP网段/掩码 使用 代理
 		net_line=`echo $line |grep "+"`
 		if [ ! -z "$net_line" ] ; then
-			net_line=`echo $net_line | sed s/AN+//g` 
+			net_line=`echo $net_line | sed s/+//g` 
 			echo $net_line  >> /tmp/ss_wantoss.list
 		fi
 
 		# -开头的 IP网段/掩码 忽略 代理
-		net_line=`echo $line |grep "-"`
+		# 针对网址中带-的排除
+		net_line=`echo $line |grep "-" |grep -v "@" |grep -v "!"`
 		if [ ! -z "$net_line" ] ; then
 			net_line=`echo $net_line | sed s/-//g` 
 			echo $net_line  >> /tmp/ss_wannoss.list
@@ -152,17 +171,23 @@ rs_ipset() {
 	done < /tmp/ss_spec_wan.txt
 	rm /tmp/ss_spec_wan.txt
 
-	# 从过滤后的文件中检测符合 点，筛选出ip
-	grep "\." /tmp/ss_spec_lan.txt >> /tmp/ss_wantoss.list
+	# 从过滤后的文件中检测符合点，筛选出ip
+	# LAN地址应该修改为wannoss
+	grep "\." /tmp/ss_spec_lan.txt >> /tmp/ss_wannoss.list
 	grep -v "\." /tmp/ss_spec_lan.txt >> /tmp/ss_spec_lan.txt
 
 	# 加载telegram网段
-	cat >> "/tmp/ss_wantoss.list" <<-\TELEGRAM
-91.108.56.0/22
-91.108.4.0/22
-109.239.140.0/24
-149.154.160.0/20
-TELEGRAM
+	#cat >> "/tmp/ss_wantoss.list" <<-\TELEGRAM
+	#91.108.56.0/22
+	#91.108.4.0/22
+	#91.108.8.0/22
+	#91.108.16.0/22
+	#91.108.12.0/22
+	#149.154.160.0/20
+	#91.105.192.0/23
+	#91.108.20.0/22
+	#185.76.151.0/24
+	#TELEGRAM
 
 	# 清空原先的ipset内容
 	ipset flush ss_white
@@ -172,9 +197,9 @@ TELEGRAM
 	if [ -s "/tmp/ss_wannoss.list" ] ; then
 		sed -e "s/^/-A ss_black &/g" -e "1 i\-N ss_black hash:net " /tmp/ss_wannoss.list | ipset -R -!
 	fi
-	# if [ -s "/tmp/ss_addr.list" ] ; then
-	# 	sed -e "s/^/-A ss_white &/g" -e "1 i\-N ss_white hash:net " /tmp/ss_addr.list | ipset -R -!
-	# fi
+	#if [ -s "/tmp/ss_gfw.list" ] ; then
+	#    sed -e "s/^/-A ss_white &/g" -e "1 i\-N ss_white hash:net " /tmp/ss_gfw.list | ipset -R -!
+	#fi
 	if [ -s "/tmp/ss_wantoss.list" ] ; then
 		sed -e "s/^/-A ss_white &/g" -e "1 i\-N ss_white hash:net " /tmp/ss_wantoss.list | ipset -R -!
 	fi
@@ -185,16 +210,15 @@ start() {
 	rs_iptables_add
 
     echo > /tmp/dnsmasq.d/$appname.usr.dnslist
-	echo >> /tmp/ss_addr.list
-	if [ ! -f "/tmp/ss_addr.list" ] ; then
-		while read line
-		do
-			if [ ! -z "$line" ] ; then
-				echo "server=/$line/127.0.0.1#53535" >> /tmp/dnsmasq.d/$appname.usr.dnslist
-			fi
-		done < /tmp/ss_addr.list
-	fi
-
+	#echo >> /tmp/ss_addr.list
+	#if [ ! -f "/tmp/ss_addr.list" ] ; then
+	#	while read line
+	#	do
+	#		if [ ! -z "$line" ] ; then
+	#			echo "server=/$line/127.0.0.1#53535" >> /tmp/dnsmasq.d/$appname.usr.dnslist
+	#		fi
+	#	done < /tmp/ss_addr.list
+	#fi
 	cp $appdir/$appname.dnslist /tmp/dnsmasq.d/
 	[ "$mode" == "1" ] && {
         cat >> /tmp/dnsmasq.d/$appname.dnslist << EOF
