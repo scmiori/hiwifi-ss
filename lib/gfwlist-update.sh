@@ -34,9 +34,9 @@ doGenerate(){
         echo -e "[ERROR] China ip list download failed." >> ${logFile}
         exit 1
 	fi
-	cat /etc/gw-shadowsocks/addr_list.conf > /etc/gw-shadowsocks/addr_list.conf_bk
+	cat /etc/gw-shadowsocks/addr_list.conf | grep -v '^#' > /etc/gw-shadowsocks/addr_list_tmp.conf
 	chmod +x /etc/gw-shadowsocks/gfwlist2dnsmasq.sh
-    /etc/gw-shadowsocks/gfwlist2dnsmasq.sh -p 53535 -s gfwlist -i --extra-domain-file addr_list.conf -o gw-shadowsocks.dnslist>/dev/null 2>&1
+    /etc/gw-shadowsocks/gfwlist2dnsmasq.sh -p 53535 -s gfwlist -i --extra-domain-file addr_list_tmp.conf -o gw-shadowsocks.dnslist>/dev/null 2>&1
     if [ $? != 0 ]; then
         echo -e "[ERROR] ${logTime} gw-shadowsocks.dnslist update failed." >> ${logFile}
     else
