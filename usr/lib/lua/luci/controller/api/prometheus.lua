@@ -245,7 +245,8 @@ function set_ss_adv()
         file:write(str..'\n')
         file:close()
     end
-    
+	
+    luci.sys.exec('/lib/gfwlist-update.sh')
     luci.sys.exec('/etc/init.d/gw-shadowsocks restart')
 
     local result = {}

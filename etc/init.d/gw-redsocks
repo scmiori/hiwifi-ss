@@ -120,27 +120,27 @@ rs_ipset() {
 	rm -f /tmp/ss_fail.list
 
 	# 处理翻墙Address
-	while read line
-	do
-		addr_line=`echo $line`
-		if [ ! -z "$addr_line" ] ; then
-		echo $addr_line
+	#while read line
+	#do
+	#	addr_line=`echo $line`
+	#	if [ ! -z "$addr_line" ] ; then
+	#	echo $addr_line
 			# 解析域名为ip地址
-			/usr/bin/resolveip -4 -t 4 $addr_line | grep -v :  > /tmp/ss_tmp.list
-			[ ! -s /tmp/ss_tmp.list ] && echo $addr_line  >> /tmp/ss_fail.list
-			[ -s /tmp/ss_tmp.list ] && cat /tmp/ss_tmp.list| sort -u | grep -v "^$" >> /tmp/ss_wantoss.list && echo "" > /tmp/ss_tmp.list
-		fi
-	done < /tmp/ss_addr.list
+	#		/usr/bin/resolveip -4 -t 4 $addr_line | grep -v :  > /tmp/ss_tmp.list
+	#		[ ! -s /tmp/ss_tmp.list ] && echo $addr_line  >> /tmp/ss_fail.list
+	#		[ -s /tmp/ss_tmp.list ] && cat /tmp/ss_tmp.list| sort -u | grep -v "^$" >> /tmp/ss_wantoss.list && echo "" > /tmp/ss_tmp.list
+	#	fi
+	#done < /tmp/ss_addr.list
 
 	while read line
 	do
 		# @开头的 域名 使用 代理中转
 		del_line=`echo $line |grep "@"`
 		if [ ! -z "$del_line" ] ; then
-			del_line=`echo $del_line | sed s/WAN@//g`
+			del_line=`echo $del_line | sed s/@//g`
 			# 解析域名为ip地址
 			/usr/bin/resolveip -4 -t 4 $del_line | grep -v :  > /tmp/ss_tmp.list
-			[ ! -s /tmp/ss_tmp.list ] && echo $addr_line  >> /tmp/ss_fail.list
+			[ ! -s /tmp/ss_tmp.list ] && echo $del_line  >> /tmp/ss_fail.list
 			[ -s /tmp/ss_tmp.list ] && cat /tmp/ss_tmp.list| sort -u | grep -v "^$" >> /tmp/ss_wantoss.list && echo "" > /tmp/ss_tmp.list
 		fi
 
