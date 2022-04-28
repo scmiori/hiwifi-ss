@@ -40,11 +40,11 @@ rs_iptables_add() {
 	iptables -t nat -N $appname 
 	iptables -t nat -A PREROUTING -i br-lan -j $appname
 	iptables -t nat -A OUTPUT -j $appname
-	iptables -t nat -A $appname -m salist --salist local --match-dip -j return 
-	iptables -t nat -A $appname -m salist --salist hiwifi --match-dip -j return 
-	iptables -t nat -A $appname -d $lan_ip/24 -j return
-	iptables -t nat -A $appname -d $wanip/24 -j return
-	iptables -t nat -A $appname -d $server_ip/32 -j return
+	iptables -t nat -A $appname -m salist --salist local --match-dip -j RETURN
+	iptables -t nat -A $appname -m salist --salist hiwifi --match-dip -j RETURN
+	iptables -t nat -A $appname -d $lan_ip/24 -j RETURN
+	iptables -t nat -A $appname -d $wanip/24 -j RETURN
+	iptables -t nat -A $appname -d $server_ip/32 -j RETURN
 
 	if [ ! -f "/tmp/ss_spec_lan.txt" ]; then
 		# mac地址 禁用ss
@@ -54,16 +54,16 @@ rs_iptables_add() {
 				mac=$(echo $line | sed s/://g| sed s/：//g | tr '[a-z]' '[A-Z]')
 				mac="${mac:0:2}:${mac:2:2}:${mac:4:2}:${mac:6:2}:${mac:8:2}:${mac:10:2}"
 				if [ ! -z "$mac" ] ; then
-					iptables -t nat -I $appname -m mac --mac-source $mac -j return
+					iptables -t nat -I $appname -m mac --mac-source $mac -j RETURN
 				fi
 			fi
-		done <　/tmp/ss_spec_lan.txt
+		done < /tmp/ss_spec_lan.txt
 	fi
 
 	# 翻墙地址，域名或ip
-	iptables -t nat -A $appname -m set --match-set ss_white dst -j DNAT --to-destination $lan_ip:$rs_port_tcp
+	iptables -t nat -A $appname -p tcp -m set --match-set ss_white dst -j DNAT --to-destination $lan_ip:$rs_port_tcp
 	# 不翻墙地址，域名或ip
-	iptables -t nat -A $appname -m set --match-set ss_black dst -j return
+	iptables -t nat -A $appname -m set --match-set ss_black dst -j RETURN
 	
 	[ "$mode" == "2" ] && {
 	
@@ -79,7 +79,7 @@ rs_iptables_add() {
 		
 	[ "$mode" == "0" ] && {
 
-		iptables -t nat -A $appname -m salist --salist china --match-dip -j return
+		iptables -t nat -A $appname -m salist --salist china --match-dip -j RETURN
 		iptables -t nat -A $appname -p tcp -j DNAT --to-destination $lan_ip:$rs_port_tcp
 		}
 	
@@ -89,7 +89,7 @@ rs_iptables_del() {
 	echo -n > /dev/null
 	iptables -t nat -D PREROUTING -i br-lan -j $appname
 	iptables -t nat -D OUTPUT -j $appname
-	iptables -t nat -f $appname
+	iptables -t nat -F $appname
 	iptables -t nat -X $appname
 }
 
@@ -192,6 +192,7 @@ rs_ipset() {
 	# 清空原先的ipset内容
 	ipset flush ss_white
 	ipset flush ss_black
+	ipset flush gfwlist
 
 	# 更新进ipset
 	if [ -s "/tmp/ss_wannoss.list" ] ; then
