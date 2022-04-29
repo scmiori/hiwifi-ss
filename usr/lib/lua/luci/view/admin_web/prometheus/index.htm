@@ -267,10 +267,10 @@ local i18n = require "luci.i18n"
                   <div class="G-main-panel-hd">系统更新</div>
                   <div class="G-main-panel-bd">
                     <table class="G-form-table" id="ss_upgrade">
-                      <!--更新Gfwlist按钮-->
+                      <!--更新GFWList按钮-->
                       <tr>
                         <td>
-                          <a href="javascript:;" class="btn J_button" id="gfwlist_update_btn">更新GFWList</a>
+                          <a href="javascript:;" class="btn J_button" id="gfwlist_update_btn">更新GFWList+CHINA_IP</a>
                           <div id="update_status"></div>
                         </td>
                       </tr>
@@ -593,7 +593,7 @@ local i18n = require "luci.i18n"
           // 更新Gfwlist
           $("#gfwlist_update_btn").click(function () {
             var request_data = {};
-            var status = "<span>GFWLIST+CHINA_IP更新中...</span>";
+            var status = "<span>GFWList+CHINA_IP更新中...</span>";
             $("#update_status").html(status)
             $.getJSON('<%=luci.dispatcher.build_url("api", "prometheus","gfwlist_update")%>', function (rsp) {
               console.log(rsp)
