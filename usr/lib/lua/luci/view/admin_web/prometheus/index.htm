@@ -1,4 +1,4 @@
-﻿<%
+<%
 --[[
 	Info	hiwifi-ss
 	Author	qiwihui  <qiwihui@qiwihui.com>
@@ -128,9 +128,9 @@ local i18n = require "luci.i18n"
                           <th>运行模式</th>
                           <td>
                             <select name="defaultroute" class="J_selectOriginal input">
-                              <option value="0">Config</option>
-                              <option value="1">Global</option>
-                              <option value="2">Bklist</option>      
+                              <option value="0">智能模式</option>
+                              <option value="1">全局模式</option>
+                              <option value="2">黑名单模式</option>      
                             </select>
                           </td>
                         </tr>
@@ -593,7 +593,7 @@ local i18n = require "luci.i18n"
           // 更新Gfwlist
           $("#gfwlist_update_btn").click(function () {
             var request_data = {};
-            var status = "<span>更新中...</span>";
+            var status = "<span>GFWLIST+CHINA_IP更新中...</span>";
             $("#update_status").html(status)
             $.getJSON('<%=luci.dispatcher.build_url("api", "prometheus","gfwlist_update")%>', function (rsp) {
               console.log(rsp)
