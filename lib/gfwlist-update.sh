@@ -23,6 +23,10 @@ doUpdate(){
         mv gw-shadowsocks.dnslist gw-shadowsocks.dnslist_bk
         rm -rf gw-shadowsocks.dnslist
     fi
+    if [ -f "/etc/gw-shadowsocks/gw-shadowsocks.ipset.dnslist" ]; then
+        mv gw-shadowsocks.ipset.dnslist gw-shadowsocks.ipset.dnslist_bk
+        rm -rf gw-shadowsocks.ipset.dnslist
+    fi
     # Todo Check if the previous list if the same as the new one
     doGenerate
 }
@@ -36,7 +40,14 @@ doGenerate(){
 	fi
 	cat /etc/gw-shadowsocks/addr_list.conf | grep -v '^#' > /etc/gw-shadowsocks/addr_list_tmp.conf
 	chmod +x /etc/gw-shadowsocks/gfwlist2dnsmasq.sh
-    /etc/gw-shadowsocks/gfwlist2dnsmasq.sh -p 53535 -s gfwlist -i --extra-domain-file addr_list_tmp.conf -o gw-shadowsocks.dnslist>/dev/null 2>&1
+    /etc/gw-shadowsocks/gfwlist2dnsmasq.sh -p 53535 -s gfwlist -i --extra-domain-file addr_list_tmp.conf -o gw-shadowsocks.ipset.dnslist>/dev/null 2>&1
+   if [ $? != 0 ]; then
+        echo -e "[ERROR] ${logTime} gw-shadowsocks.ipset.dnslist update failed." >> ${logFile}
+    else
+        echo -e "[INFO] ${logTime} gw-shadowsocks.ipset.dnslist update successfully." >> ${logFile}
+        SUCCESS=1
+    fi
+    /etc/gw-shadowsocks/gfwlist2dnsmasq.sh -p 53535 -i --extra-domain-file addr_list_tmp.conf -o gw-shadowsocks.dnslist>/dev/null 2>&1
     if [ $? != 0 ]; then
         echo -e "[ERROR] ${logTime} gw-shadowsocks.dnslist update failed." >> ${logFile}
     else

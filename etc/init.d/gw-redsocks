@@ -220,9 +220,15 @@ start() {
 	#		fi
 	#	done < /tmp/ss_addr.list
 	#fi
+	[ "$mode" == "2" ] && {
+	cp $appdir/$appname.ipset.dnslist /tmp/dnsmasq.d/
+}
+	[ "$mode" == "0" ] && {
 	cp $appdir/$appname.dnslist /tmp/dnsmasq.d/
+}
 	[ "$mode" == "1" ] && {
-        cat >> /tmp/dnsmasq.d/$appname.dnslist << EOF
+	cp $appdir/$appname.dnslist /tmp/dnsmasq.d/
+	cat >> /tmp/dnsmasq.d/$appname.dnslist << EOF
 no-resolv
 server=127.0.0.1#53535
 EOF
@@ -235,7 +241,8 @@ stop() {
 	rs_iptables_del
 	
 	rm /tmp/dnsmasq.d/$appname.dnslist
-    rm /tmp/dnsmasq.d/$appname.usr.dnslist
+	rm /tmp/dnsmasq.d/$appname.ipset.dnslist
+	rm /tmp/dnsmasq.d/$appname.usr.dnslist
 	/etc/init.d/dnsmasq restart
 }
 
