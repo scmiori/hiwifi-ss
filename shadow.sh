@@ -63,6 +63,7 @@ else
     echo 'luci-cache does not exist! 无法找到luci-cache,请确定是否是极路由环境' && echo ''
 fi
 rm -rf /tmp/geewan
+/etc/init.d/gw-shadowsocks enable
 sleep 2
 echo ''
 echo '插件成功安装!'
