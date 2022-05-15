@@ -51,24 +51,21 @@ end
 
 
 function check_ss_updates()
-    local latest_version = luci.sys.exec('curl -k https://api.github.com/repos/scmiori/hiwifi-ss/releases/latest -s | grep "tag_name" | awk "{ print $2 }" | sed s/\"//g | sed s/,//g')
+    local latest_version = luci.sys.exec('/lib/plugin-upgrade.sh check')
+	result["code"] = 0
+	result["latest_version"] = latest_version
     if VERSION ~= latest_version then
-        result["code"] = 0
-        result["has_updates"] = 1
-        result["latest_version"] = latest_version
-        json_return(result)
+        result['has_updates'] = 1
     else
-        result["code"] = 0
-        result["has_updates"] = 0
-        result["latest_version"] = latest_version
-        json_return(result)
+        result['has_updates'] = 0
     end
+	json_return(result)
 end
 
 function upgrade_ss()
-    luci.sys.exec("cd /tmp && curl -k -o shadow.sh https://raw.githubusercontent.com/scmiori/hiwifi-ss/master/shadow.sh && sh shadow.sh && rm shadow.sh")
-    -- todo check if upgraded?
-    result['code'] = 0
+    local output = luci.sys.exec("/lib/plugin-upgrade.sh upgrade")
+    local result = {}
+    result['code'] = output
 	result['version'] = "success"
 	json_return(result)
 end
