@@ -51,8 +51,9 @@ end
 
 
 function check_ss_updates()
+	local result = {}
     local latest_version = luci.sys.exec('/lib/plugin-upgrade.sh check')
-	result["code"] = 0
+	result['code'] = 0
 	result["latest_version"] = latest_version
     if VERSION ~= latest_version then
         result['has_updates'] = 1
