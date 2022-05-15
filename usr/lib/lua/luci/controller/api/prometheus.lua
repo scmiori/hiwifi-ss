@@ -41,7 +41,7 @@ end
 
 local luci_http = require("luci.http")
 local mime = require("mime")
-local VERSION = 'v1.1.0'
+local VERSION = 'v1.1.1'
 --local log = require "luci.log"
 
 function json_return(content)
