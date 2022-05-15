@@ -41,7 +41,7 @@ end
 
 local luci_http = require("luci.http")
 local mime = require("mime")
-local VERSION = 'v1.1.1'
+local VERSION = 'v1.1.0'
 --local log = require "luci.log"
 
 function json_return(content)
@@ -265,3 +265,4 @@ function get_ss_adv()
     result['wans'] = string.gsub(luci.sys.exec('cat '..wan_list),"\n","\\n")
     json_return(result)
 end
+

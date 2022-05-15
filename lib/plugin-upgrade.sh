@@ -1,5 +1,4 @@
 #!/bin/sh
-
 check() {
     latest_version=`/usr/bin/curl -k https://api.github.com/repos/scmiori/hiwifi-ss/releases/latest -s | grep 'tag_name' | awk '{ print $2 }' | sed s/\"//g | sed s/,//g`
     if [ `echo $?` == 1 ]
@@ -9,7 +8,6 @@ check() {
         echo -n "$latest_version"
     fi
 }
-
 upgrade() {
     doUpgrade=`cd /tmp && curl -k -o shadow.sh https://raw.githubusercontent.com/scmiori/hiwifi-ss/master/shadow.sh && sh shadow.sh && rm shadow.sh`
     if [ `echo $?` == 1 ]
@@ -19,7 +17,6 @@ upgrade() {
         echo -n "0"
     fi
 }
-
 case "$1" in
     check)
         check
