@@ -51,6 +51,9 @@ echo -e '...[\e[32m安装成功\e[0m]'
 echo ''
 sleep 2
 echo '==> 添加卸载信息...'
+echo ''
+status_check=`grep geewan-ss /usr/lib/opkg/status`
+if [ ! -n "$status_check" ]; then
 echo '' >>/usr/lib/opkg/status
 echo 'Package: geewan-ss' >>/usr/lib/opkg/status
 echo 'Version: master-20130924-eb9d31869e1d7590cd8c2fb1e7d226ac6cf32fad-20141024' >>/usr/lib/opkg/status
@@ -60,6 +63,10 @@ echo 'Architecture: ralink' >>/usr/lib/opkg/status
 echo 'Installed-Time: 1422509506' >>/usr/lib/opkg/status
 echo 'Auto-Installed: yes' >>/usr/lib/opkg/status
 echo '' >>/usr/lib/opkg/status
+ echo -e "...[\e[32m卸载信息已添加\e[0m]"
+else
+ echo -e "...[\e[31m卸载信息已存在\e[0m]"
+fi
 echo ''
 echo '==> 清理临时文件...'
 if test -e /var/run/luci-indexcache; then
