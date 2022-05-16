@@ -15,10 +15,10 @@ sleep 2
 echo -n "==> 备份系统文件...."
 
 if [ -f /usr/lib/lua/luci/view/admin_web/menu/menu_left.htm.ssbak ]; then
-    echo -e "...[\e[31m备份已存在\e[0m]"
+    echo -e "...[\e[31m左侧栏备份已存在\e[0m]"
 else
     cp -a /usr/lib/lua/luci/view/admin_web/menu/menu_left.htm /usr/lib/lua/luci/view/admin_web/menu/menu_left.htm.ssbak
-    echo -e "....[\e[32m备份完成\e[0m]"
+    echo -e "....[\e[32m左侧栏备份完成\e[0m]"
 fi
 echo ''
 echo -n '==> 安装插件...'
@@ -31,6 +31,9 @@ fi
 
 # 添加到手机版后台
 cd /usr/lib/lua/luci/view/admin_mobile
+if [ -f home.htm.ssbak ]; then
+    echo -e "...[\e[31m手机版备份已存在\e[0m]"
+else
 cp home.htm home.htm.ssbak
 mobile_router_control_line_num=`grep -n "mobile_router_control" home.htm | cut -d : -f 1`
 ul_end_relative_line_num=`tail -n +$mobile_router_control_line_num home.htm | grep -n -m 1 "/ul" | cut -d : -f 1`
@@ -40,6 +43,8 @@ head -n $ul_end_line_num_sub_1 home.htm > new_home.htm
 echo '<li> <a href="<%=luci.dispatcher.build_url('\''admin_web'\'','\''prometheus'\'')%>" target="_blank">安全上网<span class="right-bar"><em class="enter-pointer"></em></span></a> </li>' >> new_home.htm
 tail -n +$ul_end_line_num home.htm >> new_home.htm
 mv new_home.htm home.htm
+echo -e "....[\e[32m手机版备份完成\e[0m]"
+fi
 cd /tmp/geewan
 echo -e '...[\e[32m安装成功\e[0m]'
 
