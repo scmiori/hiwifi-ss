@@ -57,9 +57,6 @@ doGenerate(){
 }
 
 if [ -f "/etc/gw-shadowsocks/gfwlist2dnsmasq.sh" ]; then
-    cd /etc/gw-shadowsocks
-    mv gfwlist2dnsmasq.sh gfwlist2dnsmasq.sh_bk
-    doDownload
     doUpdate
 else
     doDownload
