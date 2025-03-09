@@ -1,22 +1,78 @@
 --
 -- test if ss is working
 --
-require("socket")
+local socket = require("socket")
 local https = require("ssl.https")
-local body, http_code_1, headers, status = https.request("https://www.youtube.com")
---local body, http_code_2, headers, status = https.request("https://www.facebook.com") 
---local body, http_code_3, headers, status = https.request("https://www.google.com")
---print(http_code_1)
---print(http_code_2)
---print(http_code_3)
-if http_code_1 ~= 200
-then io.write('no')
---elseif http_code_2 ~= 200 
---then
---io.write('no')
---elseif http_code_3 ~= 200 
---then
---io.write('no')
-else
-io.write('yes')
+local ltn12 = require("ltn12")
+
+-- 设置超时时间（秒）
+local TIMEOUT = 10
+
+-- 测试网站列表
+local test_sites = {
+    "https://www.youtube.com",
+    "https://www.google.com",
+    "https://www.facebook.com"
+}
+
+-- 测试单个网站连接
+local function test_site(url)
+    local start_time = socket.gettime()
+    local success = false
+    
+    local body, code, headers, status = https.request({
+        url = url,
+        timeout = TIMEOUT,
+        verify = "none"
+    })
+    
+    local end_time = socket.gettime()
+    
+    if code == 200 then
+        success = true
+    end
+    
+    return success, code, (end_time - start_time)
 end
+
+-- 主测试函数
+local function run_ss_test()
+    local all_success = true
+    local results = {}
+    
+    for _, site in ipairs(test_sites) do
+        local success, code, time = test_site(site)
+        table.insert(results, {
+            site = site,
+            success = success,
+            code = code,
+            time = time
+        })
+        
+        if not success then
+            all_success = false
+        end
+    end
+    
+    -- 输出结果
+    if all_success then
+        io.write("yes")
+    else
+        io.write("no")
+    end
+    
+    -- 可选：输出详细结果
+    --[[
+    for _, result in ipairs(results) do
+        print(string.format("Site: %s, Success: %s, Code: %d, Time: %.2fs",
+            result.site,
+            result.success and "yes" or "no",
+            result.code,
+            result.time
+        ))
+    end
+    --]]
+end
+
+-- 执行测试
+run_ss_test()
