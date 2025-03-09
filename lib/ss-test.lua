@@ -6,7 +6,7 @@ local https = require("ssl.https")
 local ltn12 = require("ltn12")
 
 -- 设置超时时间（秒）
-local TIMEOUT = 10
+local TIMEOUT = 3
 
 -- 测试网站列表
 local test_sites = {
